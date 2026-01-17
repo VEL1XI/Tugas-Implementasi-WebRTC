@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebRTC Data Channel - Pion Demo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            color: white;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            padding: 30px 0;
+        }
+
+        header h1 {
+            font-size: 2rem;
+            margin-bottom: 10px;
+            background: linear-gradient(90deg, #00d4ff, #7b2cbf);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        header p {
+            color: #a0a0a0;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 20px;
+            backdrop-filter: blur(10px);
+        }
+
+        .card h2 {
+            margin-bottom: 20px;
+            font-size: 1.3rem;
+            color: #00d4ff;
+        }
+
+        .btn {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(90deg, #00d4ff, #7b2cbf);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(0, 212, 255, 0.4);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .status {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+
+        .status-info {
+            background: rgba(52, 152, 219, 0.3);
+            border: 1px solid #3498db;
+        }
+
+        .status-success {
+            background: rgba(46, 204, 113, 0.3);
+            border: 1px solid #2ecc71;
+        }
+
+        .status-error {
+            background: rgba(231, 76, 60, 0.3);
+            border: 1px solid #e74c3c;
+        }
+
+        .message-container {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            padding: 20px;
+            height: 300px;
+            overflow-y: auto;
+            margin-bottom: 20px;
+        }
+
+        .message {
+            padding: 10px 15px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            max-width: 80%;
+        }
+
+        .message-sent {
+            background: linear-gradient(90deg, #00d4ff, #7b2cbf);
+            margin-left: auto;
+            text-align: right;
+        }
+
+        .message-received {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .message-system {
+            background: rgba(241, 196, 15, 0.3);
+            text-align: center;
+            max-width: 100%;
+            font-style: italic;
+        }
+
+        .message-time {
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.6);
+            margin-top: 5px;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        .input-group input {
+            flex: 1;
+            padding: 12px 15px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            font-size: 16px;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: #00d4ff;
+        }
+
+        .input-group input::placeholder {
+            color: #888;
+        }
+
+        .explanation {
+            background: rgba(155, 89, 182, 0.2);
+            border-left: 4px solid #9b59b6;
+            padding: 15px 20px;
+            margin-bottom: 20px;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .explanation h3 {
+            color: #9b59b6;
+            margin-bottom: 10px;
+        }
+
+        .explanation ul {
+            padding-left: 20px;
+        }
+
+        .explanation li {
+            margin-bottom: 8px;
+            color: #ccc;
+        }
+
+        code {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            color: #00d4ff;
+        }
+
+        a {
+            color: #00d4ff;
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        footer {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📡 WebRTC Data Channel Demo</h1>
+            <p>Komunikasi peer-to-peer dengan Pion WebRTC Server</p>
+        </header>
+
+        <div class="explanation">
+            <h3>📚 Cara Kerja Data Channel</h3>
+            <ul>
+                <li><strong>WebRTC Data Channel</strong> memungkinkan pengiriman data arbitrary (teks, file, dll) secara peer-to-peer</li>
+                <li>Browser membuat <code>RTCPeerConnection</code> dan <code>RTCDataChannel</code></li>
+                <li>SDP Offer dikirim ke server Pion melalui HTTP POST</li>
+                <li>Server Pion memproses offer dan mengirim SDP Answer</li>
+                <li>Setelah koneksi terbentuk, pesan dapat dikirim langsung antara browser dan server</li>
+            </ul>
+        </div>
+
+        <div class="card">
+            <h2>🔌 Koneksi</h2>
+            <div id="connectionStatus" class="status status-info">
+                Status: Belum terhubung
+            </div>
+            <button class="btn btn-primary" id="connectBtn" onclick="connect()">
+                🚀 Hubungkan ke Server
+            </button>
+            <button class="btn btn-secondary" id="disconnectBtn" onclick="disconnect()" disabled>
+                ⏹️ Putuskan Koneksi
+            </button>
+        </div>
+
+        <div class="card">
+            <h2>💬 Chat dengan Server Pion</h2>
+            <div class="message-container" id="messages">
+                <div class="message message-system">
+                    Klik "Hubungkan ke Server" untuk memulai
+                </div>
+            </div>
+            <div class="input-group">
+                <input type="text" id="messageInput" placeholder="Ketik pesan..." disabled 
+                       onkeypress="if(event.key === 'Enter') sendMessage()">
+                <button class="btn btn-primary" id="sendBtn" onclick="sendMessage()" disabled>
+                    Kirim
+                </button>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>📊 Informasi Koneksi</h2>
+            <div id="connectionInfo">
+                <p><strong>ICE Connection State:</strong> <span id="iceState">-</span></p>
+                <p><strong>Signaling State:</strong> <span id="signalingState">-</span></p>
+                <p><strong>Data Channel State:</strong> <span id="dcState">-</span></p>
+            </div>
+        </div>
+
+        <footer>
+            <p><a href="/">← Kembali ke Video Call</a></p>
+            <p>Demo menggunakan <a href="https://github.com/pion/webrtc" target="_blank">Pion WebRTC</a> (Go)</p>
+        </footer>
+    </div>
+
+    <script>
+        let peerConnection = null;
+        let dataChannel = null;
+
+        const iceServers = {
+            iceServers: [
+                { urls: 'stun:stun.l.google.com:19302' }
+            ]
+        };
+
+        async function connect() {
+            try {
+                updateStatus('Membuat koneksi...', 'info');
+                
+                // Buat peer connection
+                peerConnection = new RTCPeerConnection(iceServers);
+
+                // Buat data channel
+                dataChannel = peerConnection.createDataChannel('chat', {
+                    ordered: true
+                });
+
+                // Event handlers untuk data channel
+                dataChannel.onopen = () => {
+                    console.log('Data channel opened');
+                    updateStatus('Data Channel terbuka! ✅', 'success');
+                    updateDcState('open');
+                    enableChat(true);
+                    addMessage('Terhubung ke server Pion!', 'system');
+                };
+
+                dataChannel.onclose = () => {
+                    console.log('Data channel closed');
+                    updateStatus('Data Channel tertutup', 'info');
+                    updateDcState('closed');
+                    enableChat(false);
+                };
+
+                dataChannel.onmessage = (event) => {
+                    console.log('Received:', event.data);
+                    addMessage(event.data, 'received');
+                };
+
+                dataChannel.onerror = (error) => {
+                    console.error('Data channel error:', error);
+                    updateStatus('Error pada Data Channel', 'error');
+                };
+
+                // Event handlers untuk peer connection
+                peerConnection.oniceconnectionstatechange = () => {
+                    console.log('ICE state:', peerConnection.iceConnectionState);
+                    updateIceState(peerConnection.iceConnectionState);
+                };
+
+                peerConnection.onsignalingstatechange = () => {
+                    console.log('Signaling state:', peerConnection.signalingState);
+                    updateSignalingState(peerConnection.signalingState);
+                };
+
+                peerConnection.onicecandidate = (event) => {
+                    if (event.candidate) {
+                        console.log('New ICE candidate:', event.candidate);
+                    }
+                };
+
+                // Buat SDP offer
+                updateStatus('Membuat SDP Offer...', 'info');
+                const offer = await peerConnection.createOffer();
+                await peerConnection.setLocalDescription(offer);
+
+                // Tunggu ICE gathering selesai
+                await new Promise((resolve) => {
+                    if (peerConnection.iceGatheringState === 'complete') {
+                        resolve();
+                    } else {
+                        peerConnection.onicegatheringstatechange = () => {
+                            if (peerConnection.iceGatheringState === 'complete') {
+                                resolve();
+                            }
+                        };
+                    }
+                });
+
+                // Kirim offer ke server dan terima answer
+                updateStatus('Mengirim offer ke server Pion...', 'info');
+                const response = await fetch('/pion-demo', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(peerConnection.localDescription)
+                });
+
+                if (!response.ok) {
+                    throw new Error('Server error: ' + response.status);
+                }
+
+                const answer = await response.json();
+                updateStatus('Menerima SDP Answer dari server...', 'info');
+                
+                await peerConnection.setRemoteDescription(new RTCSessionDescription(answer));
+
+                // Update UI
+                document.getElementById('connectBtn').disabled = true;
+                document.getElementById('disconnectBtn').disabled = false;
+
+            } catch (error) {
+                console.error('Connection error:', error);
+                updateStatus('Error: ' + error.message, 'error');
+                disconnect();
+            }
+        }
+
+        function disconnect() {
+            if (dataChannel) {
+                dataChannel.close();
+                dataChannel = null;
+            }
+
+            if (peerConnection) {
+                peerConnection.close();
+                peerConnection = null;
+            }
+
+            updateStatus('Terputus', 'info');
+            updateIceState('-');
+            updateSignalingState('-');
+            updateDcState('-');
+            enableChat(false);
+
+            document.getElementById('connectBtn').disabled = false;
+            document.getElementById('disconnectBtn').disabled = true;
+
+            addMessage('Koneksi terputus', 'system');
+        }
+
+        function sendMessage() {
+            const input = document.getElementById('messageInput');
+            const message = input.value.trim();
+
+            if (message && dataChannel && dataChannel.readyState === 'open') {
+                dataChannel.send(message);
+                addMessage(message, 'sent');
+                input.value = '';
+            }
+        }
+
+        function addMessage(text, type) {
+            const container = document.getElementById('messages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message message-${type}`;
+            
+            const time = new Date().toLocaleTimeString();
+            messageDiv.innerHTML = `
+                <div>${text}</div>
+                <div class="message-time">${time}</div>
+            `;
+
+            container.appendChild(messageDiv);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function updateStatus(message, type) {
+            const status = document.getElementById('connectionStatus');
+            status.textContent = 'Status: ' + message;
+            status.className = `status status-${type}`;
+        }
+
+        function updateIceState(state) {
+            document.getElementById('iceState').textContent = state;
+        }
+
+        function updateSignalingState(state) {
+            document.getElementById('signalingState').textContent = state;
+        }
+
+        function updateDcState(state) {
+            document.getElementById('dcState').textContent = state;
+        }
+
+        function enableChat(enabled) {
+            document.getElementById('messageInput').disabled = !enabled;
+            document.getElementById('sendBtn').disabled = !enabled;
+        }
+
+        // Cleanup on page unload
+        window.onbeforeunload = () => {
+            disconnect();
+        };
+    </script>
+</body>
+</html>
